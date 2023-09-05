@@ -26,7 +26,10 @@ export const fetchImages = async (fullQuery, page = 1) => {
       throw new Error('Network response was not ok');
     }
 
-    return response.data.hits;
+    return {
+      totalHits: response.data.totalHits,
+      hits: response.data.hits,
+    };
   } catch (error) {
     throw error;
   }

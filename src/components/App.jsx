@@ -4,7 +4,6 @@ import React, { Component } from 'react';
 import { Element, scroller } from 'react-scroll';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { Loader } from './Loader/Loader';
@@ -17,15 +16,16 @@ export class App extends Component {
     page: 1,
     selectedImage: null,
     isLoading: false,
+    randomId: null,
   };
 
   handleSubmit = query => {
-    const timestamp = Date.now();
-    const uniqueQuery = `${timestamp}/${query}`;
+    const randomId = Math.random();
     this.setState({
-      query: uniqueQuery,
+      query: `${randomId}/${query}`,
       images: [],
       page: 1,
+      randomId: randomId,
     });
   };
 
@@ -59,14 +59,20 @@ export class App extends Component {
   async componentDidUpdate(prevProps, prevState) {
     if (
       prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
+      prevState.page !== this.state.page ||
+      prevState.randomId !== this.state.randomId // Додано перевірку randomID
     ) {
       this.setState({ isLoading: true });
 
       try {
-        const images = await fetchImages(this.state.query, this.state.page);
+        const { hits, totalHits } = await fetchImages(
+          this.state.query,
+          this.state.page
+        );
+
         this.setState(prevState => ({
-          images: [...prevState.images, ...images],
+          images: [...prevState.images, ...hits],
+          totalHits: totalHits,
         }));
       } catch (error) {
         console.error('Error fetching images:', error);
@@ -77,25 +83,22 @@ export class App extends Component {
   }
 
   render() {
-    const { images, selectedImage, isLoading } = this.state;
+    const { images, selectedImage, isLoading, totalHits } = this.state;
 
     return (
       <Wrapper>
         <Searchbar onSubmit={this.handleSubmit} />
         <Element name="image-gallery">
-          <ImageGallery>
-            {images.map(image => (
-              <ImageGalleryItem
-                key={image.id}
-                src={image.webformatURL}
-                alt={image.id}
-                onClick={() => this.handleImageClick(image.largeImageURL)}
-              />
-            ))}
-          </ImageGallery>
+          <ImageGallery
+            images={images}
+            handleImageClick={this.handleImageClick}
+          ></ImageGallery>
         </Element>
         {isLoading && <Loader />}
-        {images.length > 0 && <Button onClick={this.handleLoadMore} />}
+        {images.length > 0 && images.length < totalHits && (
+          <Button onClick={this.handleLoadMore} />
+        )}
+
         {selectedImage && (
           <Modal
             src={selectedImage}

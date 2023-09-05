@@ -1,5 +1,18 @@
 import { ImageGalleryContainer } from './ImageGallery.styled';
 
-export function ImageGallery({ children }) {
-  return <ImageGalleryContainer>{children}</ImageGalleryContainer>;
+import { ImageGalleryItem } from '../ImageGalleryItem/ImageGalleryItem';
+
+export function ImageGallery({ images, handleImageClick }) {
+  return (
+    <ImageGalleryContainer>
+      {images.map(image => (
+        <ImageGalleryItem
+          key={image.id}
+          src={image.webformatURL}
+          alt={image.id}
+          onClick={() => handleImageClick(image.largeImageURL)}
+        />
+      ))}
+    </ImageGalleryContainer>
+  );
 }
